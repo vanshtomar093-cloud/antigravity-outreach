@@ -17,19 +17,41 @@ export default function ValuationModal({ isOpen, onClose }: ValuationModalProps)
     email: '',
     phone: '',
     timeframe: 'immediately',
+    gdpr: false,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!formData.gdpr) return;
+    
     setIsSubmitting(true);
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...formData,
+          interest: `Valuation for ${formData.address}`,
+          message: `Timeframe: ${formData.timeframe}`,
+          type: 'valuation-request',
+          source: 'hero-valuation-modal'
+        }),
+      });
+
+      if (response.ok) {
+        setSuccess(true);
+      } else {
+        console.error('Submission failed');
+      }
+    } catch (error) {
+      console.error('Error submitting form:', error);
+    } finally {
       setIsSubmitting(false);
-      setSuccess(true);
-    }, 1500);
+    }
   };
+
 
   return (
     <AnimatePresence>
@@ -147,6 +169,21 @@ export default function ValuationModal({ isOpen, onClose }: ValuationModalProps)
                           <span>We respect your privacy. No spam, only data-driven insights.</span>
                        </div>
 
+                       <div className="flex items-start gap-4 py-2">
+                         <input 
+                           id="gdpr-modal" 
+                           type="checkbox" 
+                           required 
+                           checked={formData.gdpr}
+                           onChange={(e) => setFormData({...formData, gdpr: e.target.checked})}
+                           className="mt-1"
+                         />
+                         <label htmlFor="gdpr-modal" className="text-[10px] text-brand-charcoal/40 leading-relaxed cursor-pointer">
+                           I consent to The Jenkins Group storing my information to contact me regarding my valuation. 
+                           Privacy and precision are our core pillars.
+                         </label>
+                       </div>
+
                        <div className="flex gap-4">
                           <button 
                             type="button" 
@@ -158,7 +195,7 @@ export default function ValuationModal({ isOpen, onClose }: ValuationModalProps)
                           <button 
                             type="submit" 
                             className="flex-1 bg-brand-charcoal text-white py-4 text-xs font-bold uppercase tracking-[0.2em] hover:bg-brand-gold hover:text-brand-charcoal transition-all flex items-center justify-center gap-2"
-                            disabled={isSubmitting}
+                            disabled={isSubmitting || !formData.gdpr}
                           >
                             {isSubmitting ? "Processing..." : (
                               <>
@@ -167,6 +204,7 @@ export default function ValuationModal({ isOpen, onClose }: ValuationModalProps)
                             )}
                           </button>
                        </div>
+
                     </motion.div>
                   )}
                 </form>
