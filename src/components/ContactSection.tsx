@@ -8,13 +8,56 @@ export default function ContactSection() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // form state
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [interestedIn, setInterestedIn] = useState("Selling a Property");
+  const [messageText, setMessageText] = useState("");
+  const [gdprConsent, setGdprConsent] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
+
+    if (!gdprConsent) {
+      setError("Please agree to the GDPR terms before submitting.");
+      return;
+    }
+
     setIsSubmitting(true);
-    setTimeout(() => {
-      setIsSubmitting(false);
+
+    try {
+      const resp = await fetch("/api/send-inquiry", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name,
+          email,
+          interestedIn,
+          message: messageText,
+          gdprConsent,
+        }),
+      });
+
+      if (!resp.ok) {
+        const data = await resp.json().catch(() => ({}));
+        throw new Error(data.error || "Submission failed");
+      }
+
       setSuccess(true);
-    }, 1500);
+      // reset fields
+      setName("");
+      setEmail("");
+      setInterestedIn("Selling a Property");
+      setMessageText("");
+      setGdprConsent(false);
+    } catch (err: any) {
+      console.error("Inquiry submit error", err);
+      setError(err.message || "Something went wrong");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -95,6 +138,8 @@ export default function ContactSection() {
                      required
                      type="text" 
                      placeholder="Your full name"
+                     value={name}
+                     onChange={(e) => setName(e.target.value)}
                      className="w-full bg-transparent border-b border-white/10 py-3 focus:border-brand-gold text-white outline-none transition-all placeholder:text-white/10"
                    />
                 </div>
@@ -104,13 +149,19 @@ export default function ContactSection() {
                      required
                      type="email" 
                      placeholder="you@luxury.com"
+                     value={email}
+                     onChange={(e) => setEmail(e.target.value)}
                      className="w-full bg-transparent border-b border-white/10 py-3 focus:border-brand-gold text-white outline-none transition-all placeholder:text-white/10"
                    />
                 </div>
              </div>
              <div className="space-y-2">
                 <label className="text-[10px] uppercase tracking-widest text-white/40 font-bold">Interested In</label>
-                <select className="w-full bg-transparent border-b border-white/10 py-3 focus:border-brand-gold text-white/60 outline-none transition-all appearance-none">
+                <select
+                  value={interestedIn}
+                  onChange={(e) => setInterestedIn(e.target.value)}
+                  className="w-full bg-transparent border-b border-white/10 py-3 focus:border-brand-gold text-white/60 outline-none transition-all appearance-none"
+                >
                    <option className="bg-brand-charcoal text-white">Selling a Property</option>
                    <option className="bg-brand-charcoal text-white">Acquisition Inquiry</option>
                    <option className="bg-brand-charcoal text-white">Strategic Consulting</option>
@@ -123,9 +174,28 @@ export default function ContactSection() {
                   required
                   rows={4}
                   placeholder="How can The Jenkins Group assist you?"
+                  value={messageText}
+                  onChange={(e) => setMessageText(e.target.value)}
                   className="w-full bg-transparent border border-white/5 p-4 focus:border-brand-gold text-white outline-none transition-all placeholder:text-white/10 resize-none"
                 />
              </div>
+
+             <div className="flex items-center gap-2">
+               <input
+                 type="checkbox"
+                 checked={gdprConsent}
+                 onChange={(e) => setGdprConsent(e.target.checked)}
+                 id="gdpr-consent"
+                 className="w-4 h-4 form-checkbox text-brand-gold"
+               />
+               <label htmlFor="gdpr-consent" className="text-xs text-white/70">
+                 I agree to the <a href="/privacy" className="underline">privacy policy</a> and consent to having my data processed.
+               </label>
+             </div>
+
+             {error && (
+               <p className="text-red-400 text-sm">{error}</p>
+             )}
              
              <button 
                type="submit" 
