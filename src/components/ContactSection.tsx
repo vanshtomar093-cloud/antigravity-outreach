@@ -8,40 +8,13 @@ export default function ContactSection() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    interest: 'Selling a Property',
-    message: '',
-    gdpr: false,
-  });
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.gdpr) return;
-    
     setIsSubmitting(true);
-    try {
-      const response = await fetch('/api/contact', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...formData,
-          type: 'inquiry',
-          source: 'contact-section'
-        }),
-      });
-
-      if (response.ok) {
-        setSuccess(true);
-      } else {
-        console.error('Submission failed');
-      }
-    } catch (error) {
-      console.error('Error submitting form:', error);
-    } finally {
+    setTimeout(() => {
       setIsSubmitting(false);
-    }
+      setSuccess(true);
+    }, 1500);
   };
 
   return (
@@ -122,8 +95,6 @@ export default function ContactSection() {
                      required
                      type="text" 
                      placeholder="Your full name"
-                     value={formData.name}
-                     onChange={(e) => setFormData({...formData, name: e.target.value})}
                      className="w-full bg-transparent border-b border-white/10 py-3 focus:border-brand-gold text-white outline-none transition-all placeholder:text-white/10"
                    />
                 </div>
@@ -133,19 +104,13 @@ export default function ContactSection() {
                      required
                      type="email" 
                      placeholder="you@luxury.com"
-                     value={formData.email}
-                     onChange={(e) => setFormData({...formData, email: e.target.value})}
                      className="w-full bg-transparent border-b border-white/10 py-3 focus:border-brand-gold text-white outline-none transition-all placeholder:text-white/10"
                    />
                 </div>
              </div>
              <div className="space-y-2">
                 <label className="text-[10px] uppercase tracking-widest text-white/40 font-bold">Interested In</label>
-                <select 
-                  value={formData.interest}
-                  onChange={(e) => setFormData({...formData, interest: e.target.value})}
-                  className="w-full bg-transparent border-b border-white/10 py-3 focus:border-brand-gold text-white/60 outline-none transition-all appearance-none"
-                >
+                <select className="w-full bg-transparent border-b border-white/10 py-3 focus:border-brand-gold text-white/60 outline-none transition-all appearance-none">
                    <option className="bg-brand-charcoal text-white">Selling a Property</option>
                    <option className="bg-brand-charcoal text-white">Acquisition Inquiry</option>
                    <option className="bg-brand-charcoal text-white">Strategic Consulting</option>
@@ -158,25 +123,8 @@ export default function ContactSection() {
                   required
                   rows={4}
                   placeholder="How can The Jenkins Group assist you?"
-                  value={formData.message}
-                  onChange={(e) => setFormData({...formData, message: e.target.value})}
                   className="w-full bg-transparent border border-white/5 p-4 focus:border-brand-gold text-white outline-none transition-all placeholder:text-white/10 resize-none"
                 />
-             </div>
-
-             <div className="flex items-start gap-4">
-               <input 
-                 id="gdpr" 
-                 type="checkbox" 
-                 required 
-                 checked={formData.gdpr}
-                 onChange={(e) => setFormData({...formData, gdpr: e.target.checked})}
-                 className="mt-1"
-               />
-               <label htmlFor="gdpr" className="text-[10px] text-white/40 leading-relaxed cursor-pointer">
-                 I consent to The Jenkins Group storing my information to contact me regarding my inquiry. 
-                 Data-driven precision requires human-first trust.
-               </label>
              </div>
              
              <button 
